@@ -4,7 +4,12 @@
       <template #header>
         <div class="card-header">
           <span>商品管理</span>
-          <el-button type="primary" @click="handleAdd">添加商品</el-button>
+          <div>
+            <el-button @click="showBatchUpload = true" type="warning">
+              批量上传
+            </el-button>
+            <el-button type="primary" @click="handleAdd">添加商品</el-button>
+          </div>
         </div>
       </template>
 
@@ -54,7 +59,7 @@
     </el-card>
 
     <!-- 编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="800px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="商品名称">
           <el-input v-model="form.name" />
@@ -84,6 +89,12 @@
             <el-radio label="off">下架</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="商品图片">
+          <ImageUploader 
+            v-model="form.images" 
+            :max-count="10"
+          />
+        </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" rows="3" />
         </el-form-item>
@@ -93,6 +104,11 @@
         <el-button type="primary" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 批量上传对话框 -->
+    <el-dialog v-model="showBatchUpload" title="批量上传商品" width="800px">
+      <BatchUpload @batch-upload-success="onBatchUploadSuccess" />
+    </el-dialog>
   </div>
 </template>
 
@@ -100,6 +116,8 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '../api'
+import ImageUploader from '../components/ImageUploader.vue'
+import BatchUpload from '../components/BatchUpload.vue'
 
 const products = ref([])
 const categories = ref([])
@@ -109,6 +127,7 @@ const pageSize = ref(10)
 const total = ref(0)
 
 const dialogVisible = ref(false)
+const showBatchUpload = ref(false)
 const dialogTitle = ref('')
 const form = ref({
   name: '',
@@ -117,7 +136,8 @@ const form = ref({
   originalPrice: 0,
   stock: 0,
   status: 'on',
-  description: ''
+  description: '',
+  images: [] // 添加图片字段
 })
 const isEdit = ref(false)
 const editId = ref(null)
@@ -162,7 +182,8 @@ const handleAdd = () => {
     originalPrice: 0,
     stock: 0,
     status: 'on',
-    description: ''
+    description: '',
+    images: [] // 初始化为空数组
   }
   dialogVisible.value = true
 }
@@ -171,22 +192,29 @@ const handleEdit = (row) => {
   isEdit.value = true
   editId.value = row.id
   dialogTitle.value = '编辑商品'
-  form.value = { ...row }
+  form.value = { ...row, images: row.images || [] } // 确保图片数组存在
   dialogVisible.value = true
 }
 
 const handleSave = async () => {
   try {
+    // 准备数据，包含图片信息
+    const productData = {
+      ...form.value,
+      images: form.value.images // 包含图片数组
+    }
+
     if (isEdit.value) {
-      await api.updateProduct(editId.value, form.value)
+      await api.updateProduct(editId.value, productData)
     } else {
-      await api.createProduct(form.value)
+      await api.createProduct(productData)
     }
     ElMessage.success('保存成功')
     dialogVisible.value = false
     loadData()
   } catch (error) {
     console.error(error)
+    ElMessage.error('保存失败')
   }
 }
 
@@ -204,6 +232,12 @@ const handleDelete = async (row) => {
     }
   }
 }
+
+const onBatchUploadSuccess = (data) => {
+  ElMessage.success(`批量上传完成：${data.successCount}个成功，${data.failCount}个失败`)
+  showBatchUpload.value = false
+  loadData() // 重新加载商品列表
+}
 </script>
 
 <style scoped>
@@ -211,5 +245,49 @@ const handleDelete = async (row) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.image-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.image-item {
+  position: relative;
+  display: inline-block;
+}
+
+.image-actions {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+}
+
+.image-uploader {
+  margin-top: 10px;
+}
+
+.image-uploader .el-upload {
+  width: 100px;
+  height: 100px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--el-transition-duration-fast);
+}
+
+.image-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+
+.el-icon.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 100px;
+  height: 100px;
+  text-align: center;
 }
 </style>

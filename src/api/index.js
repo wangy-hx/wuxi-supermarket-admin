@@ -24,5 +24,35 @@ export default {
   getBanners: (params) => request.get('/banners', { params }),
   createBanner: (data) => request.post('/banners', data),
   updateBanner: (id, data) => request.put(`/banners/${id}`, data),
-  deleteBanner: (id) => request.delete(`/banners/${id}`)
+  deleteBanner: (id) => request.delete(`/banners/${id}`),
+
+  // 库存管理
+  checkInventory: (params) => request.get('/inventory/check', { params }),
+
+  // 图片上传
+  uploadImage: (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request.post('/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  uploadImages: (files) => {
+    const formData = new FormData()
+    for (let file of files) {
+      formData.append('files', file)
+    }
+    return request.post('/upload/images', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  // 批量上传
+  batchUploadProducts: (file) => {
+    const formData = new FormData()
+    formData.append('fileData', file)
+    return request.post('/upload/batch-products', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
 }

@@ -27,6 +27,12 @@ const routes = [
         meta: { title: '商品管理' }
       },
       {
+        path: 'inventory',
+        name: 'Inventory',
+        component: () => import('../views/Inventory.vue'),
+        meta: { title: '库存管理' }
+      },
+      {
         path: 'categories',
         name: 'Categories',
         component: () => import('../views/Categories.vue'),

@@ -17,6 +17,10 @@
           <el-icon><Goods /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
+        <el-menu-item index="/inventory">
+          <el-icon><Box /></el-icon>
+          <span>库存管理</span>
+        </el-menu-item>
         <el-menu-item index="/categories">
           <el-icon><Folder /></el-icon>
           <span>分类管理</span>
